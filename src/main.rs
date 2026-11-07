@@ -1,7 +1,7 @@
 use std::{
     cmp::{self},
-    fmt,
-    io::{Result, Stdout, Write, stdout},
+    fmt, fs,
+    io::{self, Result, Stdout, Write, stdout},
     process,
     time::Duration,
 };
@@ -148,6 +148,16 @@ impl Editor {
         }
     }
 
+    fn save(&mut self) -> Result<()> {
+        let mut full = String::new();
+        for line in &self.lines {
+            full.push_str(&line.to_string());
+        }
+        fs::write(self.filename.clone(), full)?;
+        self.dirty = false;
+        Ok(())
+    }
+
     fn poll_events(&mut self) -> Result<bool> {
         if !event::poll(Duration::from_millis(500))? {
             return Ok(true);
@@ -160,6 +170,9 @@ impl Editor {
             match (modifiers, code) {
                 (KeyModifiers::CONTROL, KeyCode::Char('c')) => {
                     return Ok(false);
+                }
+                (KeyModifiers::CONTROL, KeyCode::Char('s')) => {
+                    self.save()?;
                 }
                 (_, KeyCode::Char(c)) => {
                     self.putc(c);
